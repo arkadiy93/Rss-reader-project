@@ -5,11 +5,6 @@ const precss = require('precss');
 
 module.exports = {
   mode: process.env.NODE_ENV || 'development',
-  entry: './src/bin/index.js',
-  output: {
-    path: `${__dirname}/dist`,
-    filename: 'index.js',
-  },
   module: {
     rules: [
       {
@@ -22,13 +17,13 @@ module.exports = {
       {
         test: /\.(scss)$/,
         use: [{
-          loader: 'style-loader', // inject CSS to page
+          loader: 'style-loader',
         }, {
-          loader: 'css-loader', // translates CSS into CommonJS modules
+          loader: 'css-loader',
         }, {
-          loader: 'postcss-loader', // Run post css actions
+          loader: 'postcss-loader',
           options: {
-            plugins() { // post css plugins, can be exported to postcss.config.js
+            plugins() {
               return [
                 precss,
                 autoprefixer,
@@ -44,7 +39,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       title: 'RSS project',
-      index: 'index.html',
+      template: 'template.html',
     }),
   ],
 };

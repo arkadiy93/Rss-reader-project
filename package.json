@@ -3,11 +3,7 @@
   "version": "0.0.1",
   "description": "RSS hexlet project",
   "main": "dist/index.js",
-  "bin": {
-    "gendiff": "dist/bin/rss.js"
-  },
   "scripts": {
-    "dev": "webpack --mode development ./src/bin/index.js --output ./dista/main.js --watch",
     "webpack-serve": "webpack-serve",
     "test": "jest",
     "babel-node": "babel-node",
@@ -15,7 +11,7 @@
     "flow-typed": "flow-typed",
     "gulp": "gulp",
     "eslint": "eslint",
-    "webpack": "webpack",
+    "webpack": "webpack --watch",
     "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
     "prepublishOnly": "npm run build"
   },
@@ -23,7 +19,7 @@
     "dist"
   ],
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "jsdom"
   },
   "author": "Arkadiy Stepanov",
   "license": "ISC",
@@ -60,6 +56,7 @@
     "eslint-plugin-flowtype": "^3.0.0",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-jest": "^21.25.0",
+    "flow-bin": "^0.83.0",
     "html-webpack-plugin": "^3.2.0",
     "jest": "^23.6.0",
     "node-sass": "^4.9.4",
@@ -72,8 +69,10 @@
     "webpack-dev-server": "^3.1.9"
   },
   "dependencies": {
+    "axios": "^0.18.0",
     "bootstrap": "^4.1.3",
     "jquery": "^3.3.1",
-    "popper.js": "^1.14.4"
+    "popper.js": "^1.14.4",
+    "validator": "^10.8.0"
   }
 }

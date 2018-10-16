@@ -6,8 +6,11 @@ develop:
 install-deps:
 	npm install
 
-start:
-	npm run babel-node -- src/bin/rss.js
+webpack:
+	npm run webpack
+
+dev:
+	npm run 
 
 install-flow-typed:
 	npm run flow-typed install
