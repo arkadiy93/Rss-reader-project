@@ -1,6 +1,8 @@
-const setAttributes = (element, attributes) =>
-  attributes.forEach(({ type, value }) => element.setAttribute(type, value));
-
+const setAttributes = (element, attributes) => {
+  attributes.forEach(({ type, value }) => {
+    element.setAttribute(type, value);
+  });
+};
 const appendChildren = (element, children) => children.forEach(el => element.append(el));
 
 const createForm = () => {
