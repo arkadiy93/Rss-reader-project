@@ -69,7 +69,7 @@ export default () => {
     input.value = '';
     const parser = new DOMParser();
 
-    axios.get(`https://cors-anywhere.herokuapp.com/${requestedUrl}`, { // https://crossorigin.me/ didnt work;
+    axios.get(`https://thingproxy.freeboard.io/fetch/${requestedUrl}`, { // https://crossorigin.me/ didnt work;
       headers: { 'Access-Control-Allow-Origin': '*' },
     }).then(({ data }) => {
       state.feedURLs = [requestedUrl, ...feedURLs];
