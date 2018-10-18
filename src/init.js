@@ -1,14 +1,33 @@
 import axios from 'axios';
 import isURL from 'validator/lib/isURL';
 import { find } from 'lodash';
-import { watch } from 'melanke-watchjs';
 import $ from 'jquery';
+import url from 'url';
+import startWatching from './watchers';
+
+const parseRssData = (data) => {
+  const parser = new DOMParser();
+  const document = parser.parseFromString(data, 'text/html');
+  const channel = document.getElementsByTagName('channel')[0];
+  const title = channel.querySelector('title').innerHTML;
+  const description = channel.querySelector('description').innerHTML;
+  const items = channel.getElementsByTagName('item');
+  const itemList = Array.from(items).map((item) => {
+    const itemTitle = item.querySelector('title').innerHTML;
+    const itemDescription = item.querySelector('description').innerHTML;
+    const link = item.querySelector('guid').innerHTML;
+    return { title: itemTitle, link, description: itemDescription };
+  });
+  return { title, description, itemList };
+};
 
 export default () => {
   const state = {
     feedURLs: [],
     feedList: [],
     modalData: { isOpen: false, data: '' },
+    errorModalData: { isOpen: false, data: '' },
+    isInputValid: true,
   };
 
   const handleClick = ({ description }) => () => {
@@ -19,40 +38,8 @@ export default () => {
     state.modalData = { isOpen: false, data: '' };
   });
 
-  watch(state, 'modalData', () => {
-    const modalBody = document.querySelector('.modal-body');
-    if (state.modalData.isOpen) {
-      const p = document.createElement('p');
-      p.innerText = state.modalData.data;
-      modalBody.append(p);
-      $('#modal').modal('show');
-    } else {
-      modalBody.innerHTML = '';
-    }
-  });
-
-  watch(state, 'feedList', () => {
-    const jumbotron = document.querySelector('.jumbotron');
-    const { itemList } = state.feedList[0];
-    const ul = document.createElement('ul');
-    const hr = document.createElement('hr');
-    itemList.forEach((item) => {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      const button = document.createElement('button');
-      button.classList.add('btn', 'btn-primary');
-      button.setAttribute('type', 'button');
-      button.setAttribute('data-whatever', 'lol');
-      button.innerHTML = 'Open';
-      button.addEventListener('click', handleClick(item));
-      a.setAttribute('href', item.link);
-      a.innerHTML = item.title;
-      li.append(a);
-      li.append(button);
-      ul.append(li);
-    });
-    jumbotron.append(hr);
-    jumbotron.append(ul);
+  $('#errorModal').on('hide.bs.modal', () => {
+    state.errorModalData = { isOpen: false, data: '' };
   });
 
   const handleSubmit = (e) => {
@@ -62,34 +49,28 @@ export default () => {
     const { feedURLs } = state;
     const includesURL = find(feedURLs, el => el === requestedUrl);
     if (!isURL(requestedUrl) || includesURL) {
-      input.classList.add('is-invalid');
+      state.isInputValid = false;
       return;
     }
-    input.classList.remove('is-invalid');
+    state.isInputValid = true;
     input.value = '';
-    const parser = new DOMParser();
-
-    axios.get(`https://thingproxy.freeboard.io/fetch/${requestedUrl}`, { // https://crossorigin.me/ didnt work;
+    const urlWithProxy = url.format({
+      protocol: 'https',
+      hostname: 'thingproxy.freeboard.io/fetch',
+      pathname: requestedUrl,
+    });
+    axios.get(urlWithProxy, {
       headers: { 'Access-Control-Allow-Origin': '*' },
     }).then(({ data }) => {
+      const parsedFeedData = parseRssData(data);
       state.feedURLs = [requestedUrl, ...feedURLs];
-      const document = parser.parseFromString(data, 'text/html');
-      const channel = document.getElementsByTagName('channel')[0];
-      const title = channel.querySelector('title').innerHTML;
-      const description = channel.querySelector('description').innerHTML;
-      const items = channel.getElementsByTagName('item');
-      const itemList = Array.from(items).map((item) => {
-        const itemTitle = item.querySelector('title').innerHTML;
-        const itemDescription = item.querySelector('description').innerHTML;
-        const link = item.querySelector('guid').innerHTML;
-        return { title: itemTitle, link, description: itemDescription };
-      });
-      state.feedList = [{ title, description, itemList }, ...state.feedList];
+      state.feedList = [parsedFeedData, ...state.feedList];
     }).catch((err) => {
-      throw new Error(err);
+      state.errorModalData = { isOpen: true, data: err };
     });
   };
 
   const [form] = document.getElementsByTagName('form');
   form.addEventListener('submit', handleSubmit);
+  startWatching(state, handleClick);
 };
