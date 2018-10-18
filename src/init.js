@@ -36,9 +36,6 @@ export default () => {
 
   $('#modal').on('hide.bs.modal', () => {
     state.modalData = { isOpen: false, data: '' };
-  });
-
-  $('#errorModal').on('hide.bs.modal', () => {
     state.errorModalData = { isOpen: false, data: '' };
   });
 
