@@ -75,6 +75,7 @@
     "lodash": "^4.17.11",
     "melanke-watchjs": "^1.5.0",
     "popper.js": "^1.14.4",
+    "url-join": "^4.0.0",
     "validator": "^10.8.0"
   }
 }

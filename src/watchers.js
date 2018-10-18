@@ -2,6 +2,14 @@ import { watch } from 'melanke-watchjs';
 import $ from 'jquery';
 
 const startWatching = (state, handleClick) => {
+  watch(state, 'isFeedLoading', () => {
+    if (state.isFeedLoading) {
+      document.getElementById('submitButton').disabled = true;
+    } else {
+      document.getElementById('submitButton').disabled = false;
+    }
+  });
+
   watch(state, 'isInputValid', () => {
     const input = document.getElementById('textInput');
     if (!state.isInputValid) {
@@ -43,9 +51,18 @@ const startWatching = (state, handleClick) => {
 
   watch(state, 'feedList', () => {
     const jumbotron = document.querySelector('.jumbotron');
-    const { itemList } = state.feedList[0];
-    const ul = document.createElement('ul');
     const hr = document.createElement('hr');
+    const { itemList, id } = state.feedList[0];
+    let targetUl = document.getElementById(id);
+    if (!targetUl) {
+      targetUl = document.createElement('ul');
+      targetUl.setAttribute('id', id);
+    } else {
+      targetUl.innerHTML = '';
+    }
+    targetUl.append(hr);
+    const input = document.getElementById('textInput');
+    input.value = '';
     itemList.forEach((item) => {
       const li = document.createElement('li');
       const a = document.createElement('a');
@@ -59,11 +76,9 @@ const startWatching = (state, handleClick) => {
       a.innerHTML = item.title;
       li.append(a);
       li.append(button);
-      ul.append(li);
+      targetUl.append(li);
     });
-    jumbotron.append(hr);
-    jumbotron.append(ul);
+    jumbotron.append(targetUl);
   });
 };
-
 export default startWatching;
