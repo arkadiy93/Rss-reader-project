@@ -51,27 +51,26 @@ export default () => {
   });
 
   const startReloading = () => {
-    const getNewFeeds = state.feedData.map(el =>
-      axios.get(el.feedURL, {
-        headers: { 'Access-Control-Allow-Origin': '*' },
-      }).then(({ data }) => {
-        const listIndex = state.feedList.findIndex(({ id }) => id === el.id);
-        const dataIndex = state.feedData.findIndex(({ id }) => id === el.id);
-        const { itemList } = state.feedList[listIndex];
-        const { parsedFeedData, feedList } = parseRssData(data, el.feedURL, el.id);
-        const newUpdateTime = parsedFeedData.lastUpdate;
-        const newList = feedList.itemList;
-        if (newUpdateTime !== el.lastUpdate) {
-          const newItems = newList
-            .filter(item => !find(itemList, ({ title }) => item.title === title));
-          const updatedFeedData = { ...el, lastUpdate: newUpdateTime };
-          const updatedList = [...newItems, ...itemList];
-          return {
-            listIndex, updatedFeedData, updatedList, dataIndex,
-          };
-        }
-        return null;
-      }).catch(err => err));
+    const getNewFeeds = state.feedData.map(el => axios.get(el.feedURL, {
+      headers: { 'Access-Control-Allow-Origin': '*' },
+    }).then(({ data }) => {
+      const listIndex = state.feedList.findIndex(({ id }) => id === el.id);
+      const dataIndex = state.feedData.findIndex(({ id }) => id === el.id);
+      const { itemList } = state.feedList[listIndex];
+      const { parsedFeedData, feedList } = parseRssData(data, el.feedURL, el.id);
+      const newUpdateTime = parsedFeedData.lastUpdate;
+      const newList = feedList.itemList;
+      if (newUpdateTime !== el.lastUpdate) {
+        const newItems = newList
+          .filter(item => !find(itemList, ({ title }) => item.title === title));
+        const updatedFeedData = { ...el, lastUpdate: newUpdateTime };
+        const updatedList = [...newItems, ...itemList];
+        return {
+          listIndex, updatedFeedData, updatedList, dataIndex,
+        };
+      }
+      return null;
+    }).catch(err => err));
 
     Promise.all(getNewFeeds).then((response) => {
       response.filter(el => el).forEach((el) => {
