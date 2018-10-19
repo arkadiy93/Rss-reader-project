@@ -6,12 +6,11 @@ import urljoin from 'url-join';
 import startWatching from './watchers';
 
 
-const parseRssData = (data, feedURL) => {
+const parseRssData = (data, feedURL, id = uniqueId()) => {
   const parser = new DOMParser();
   const document = parser.parseFromString(data, 'text/html');
   const [channel] = document.getElementsByTagName('channel');
   const lastUpdate = channel.querySelector('pubdate').innerHTML;
-  const id = uniqueId();
   const title = channel.querySelector('title').innerHTML;
   const description = channel.querySelector('description').innerHTML;
   const items = channel.getElementsByTagName('item');
@@ -24,16 +23,16 @@ const parseRssData = (data, feedURL) => {
     };
   });
   return {
-    urlData: { id, feedURL, lastUpdate },
-    listFeedData: {
-      title, description, itemList, id,
+    parsedFeedData: {
+      id, feedURL, lastUpdate, title, description,
     },
+    feedList: { itemList, id },
   };
 };
 
 export default () => {
   const state = {
-    feedURLsData: [],
+    feedData: [],
     feedList: [],
     modalData: { isOpen: false, data: '' },
     errorModalData: { isOpen: false, data: '' },
@@ -52,45 +51,51 @@ export default () => {
   });
 
   const startReloading = () => {
-    const parser = new DOMParser();
-    setInterval(() => {
-      state.feedURLsData.forEach((el) => {
+    console.log('reload');
+    const getNewFeeds = state.feedData.map(el =>
+      new Promise((resolve, reject) => {
         axios.get(el.feedURL, {
           headers: { 'Access-Control-Allow-Origin': '*' },
         }).then(({ data }) => {
-          const { itemList } = find(state.feedList, ({ id }) => id === el.id);
-          const index = state.feedList.findIndex(({ id }) => id === el.id);
-          const document = parser.parseFromString(data, 'text/html');
-          const [channel] = document.getElementsByTagName('channel');
-          const lastUpdate = channel.querySelector('pubdate').innerHTML;
-          if (lastUpdate !== el.lastUpdate) {
-            const items = channel.getElementsByTagName('item');
-            const newFeedItems = Array.from(items).filter((item) => {
-              const itemTitle = item.querySelector('title').innerHTML;
-              return !find(itemList, ({ title }) => itemTitle === title);
-            }).map((item) => {
-              const itemTitle = item.querySelector('title').innerHTML;
-              const itemDescription = item.querySelector('description').innerHTML;
-              const link = item.querySelector('guid').innerHTML;
-              return {
-                title: itemTitle, link, description: itemDescription, id: el.id,
-              };
+          const listIndex = state.feedList.findIndex(({ id }) => id === el.id);
+          const dataIndex = state.feedData.findIndex(({ id }) => id === el.id);
+          const { itemList } = state.feedList[listIndex];
+          const { parsedFeedData, feedList } = parseRssData(data, el.feedURL, el.id);
+          const newUpdateTime = parsedFeedData.lastUpdate;
+          const newItemList = feedList.itemList;
+          if (newUpdateTime !== el.lastUpdate) {
+            const newFeedItems = newItemList.filter(item =>
+              !find(itemList, ({ title }) => item.title === title));
+            const updatedFeedData = { ...el, lastUpdate: newUpdateTime };
+            const updatedList = [...newFeedItems, ...itemList];
+            resolve({
+              listIndex, updatedFeedData, updatedList, dataIndex,
             });
-            state.feedList[index].itemList = [...newFeedItems, ...itemList];
           }
+          resolve(null);
+        }).catch((err) => {
+          reject(err);
         });
-      });
-    }, 5000);
-  };
+      }));
 
+    Promise.all(getNewFeeds).then((response) => {
+      response.filter(el => el).forEach((el) => {
+        state.feedData[el.dataIndex] = el.updatedFeedData;
+        state.feedList[el.listIndex].itemList = el.updatedList;
+      });
+      setTimeout(startReloading, 5000);
+    }).catch((err) => {
+      state.errorModalData = { isOpen: true, data: err };
+    });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const input = document.getElementById('textInput');
     const requestedUrl = input.value;
-    const { feedURLsData } = state;
-    const urlWithProxy = urljoin('https://thingproxy.freeboard.io/fetch', requestedUrl);
-    const includesURL = find(feedURLsData, ({ feedURL }) => feedURL === urlWithProxy);
+    const { feedData } = state;
+    const urlWithProxy = urljoin('https://cors-anywhere.herokuapp.com/', requestedUrl);
+    const includesURL = find(feedData, ({ feedURL }) => feedURL === urlWithProxy);
     if (!isURL(requestedUrl) || includesURL) {
       state.isInputValid = false;
       return;
@@ -101,13 +106,13 @@ export default () => {
       headers: { 'Access-Control-Allow-Origin': '*' },
     }).then(({ data }) => {
       state.isFeedLoading = false;
-      const { urlData, listFeedData } = parseRssData(data, urlWithProxy);
+      const { parsedFeedData, feedList } = parseRssData(data, urlWithProxy);
+      state.feedData = [parsedFeedData, ...feedData];
+      state.feedList = [feedList, ...state.feedList];
       if (!state.isReloading) {
         state.isReloading = true;
         startReloading();
       }
-      state.feedURLsData = [urlData, ...feedURLsData];
-      state.feedList = [listFeedData, ...state.feedList];
     }).catch((err) => {
       state.isFeedLoading = false;
       state.errorModalData = { isOpen: true, data: err };

@@ -3,11 +3,7 @@ import $ from 'jquery';
 
 const startWatching = (state, handleClick) => {
   watch(state, 'isFeedLoading', () => {
-    if (state.isFeedLoading) {
-      document.getElementById('submitButton').disabled = true;
-    } else {
-      document.getElementById('submitButton').disabled = false;
-    }
+    document.getElementById('submitButton').disabled = state.isFeedLoading;
   });
 
   watch(state, 'isInputValid', () => {
@@ -51,34 +47,35 @@ const startWatching = (state, handleClick) => {
 
   watch(state, 'feedList', () => {
     const jumbotron = document.querySelector('.jumbotron');
-    const hr = document.createElement('hr');
-    const { itemList, id } = state.feedList[0];
-    let targetUl = document.getElementById(id);
-    if (!targetUl) {
-      targetUl = document.createElement('ul');
-      targetUl.setAttribute('id', id);
-    } else {
-      targetUl.innerHTML = '';
-    }
-    targetUl.append(hr);
-    const input = document.getElementById('textInput');
-    input.value = '';
-    itemList.forEach((item) => {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      const button = document.createElement('button');
-      button.classList.add('btn', 'btn-primary');
-      button.setAttribute('type', 'button');
-      button.setAttribute('data-whatever', 'lol');
-      button.innerHTML = 'Open';
-      button.addEventListener('click', handleClick(item));
-      a.setAttribute('href', item.link);
-      a.innerHTML = item.title;
-      li.append(a);
-      li.append(button);
-      targetUl.append(li);
+    state.feedList.forEach(({ itemList, id }) => {
+      const hr = document.createElement('hr');
+      let targetUl = document.getElementById(id);
+      if (!targetUl) {
+        targetUl = document.createElement('ul');
+        targetUl.setAttribute('id', id);
+      } else {
+        targetUl.innerHTML = '';
+      }
+      targetUl.append(hr);
+      const input = document.getElementById('textInput');
+      input.value = '';
+      itemList.forEach((item) => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        const button = document.createElement('button');
+        button.classList.add('btn', 'btn-primary');
+        button.setAttribute('type', 'button');
+        button.setAttribute('data-whatever', 'lol');
+        button.innerHTML = 'Open';
+        button.addEventListener('click', handleClick(item));
+        a.setAttribute('href', item.link);
+        a.innerHTML = item.title;
+        li.append(a);
+        li.append(button);
+        targetUl.append(li);
+      });
+      jumbotron.append(targetUl);
     });
-    jumbotron.append(targetUl);
   });
 };
 export default startWatching;
