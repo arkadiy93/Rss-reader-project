@@ -51,32 +51,30 @@ export default () => {
   });
 
   const startReloading = () => {
-    console.log('reload');
-    const getNewFeeds = state.feedData.map(el =>
-      new Promise((resolve, reject) => {
-        axios.get(el.feedURL, {
-          headers: { 'Access-Control-Allow-Origin': '*' },
-        }).then(({ data }) => {
-          const listIndex = state.feedList.findIndex(({ id }) => id === el.id);
-          const dataIndex = state.feedData.findIndex(({ id }) => id === el.id);
-          const { itemList } = state.feedList[listIndex];
-          const { parsedFeedData, feedList } = parseRssData(data, el.feedURL, el.id);
-          const newUpdateTime = parsedFeedData.lastUpdate;
-          const newItemList = feedList.itemList;
-          if (newUpdateTime !== el.lastUpdate) {
-            const newFeedItems = newItemList.filter(item =>
-              !find(itemList, ({ title }) => item.title === title));
-            const updatedFeedData = { ...el, lastUpdate: newUpdateTime };
-            const updatedList = [...newFeedItems, ...itemList];
-            resolve({
-              listIndex, updatedFeedData, updatedList, dataIndex,
-            });
-          }
-          resolve(null);
-        }).catch((err) => {
-          reject(err);
-        });
-      }));
+    const getNewFeeds = state.feedData.map(el => new Promise((resolve, reject) => {
+      axios.get(el.feedURL, {
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      }).then(({ data }) => {
+        const listIndex = state.feedList.findIndex(({ id }) => id === el.id);
+        const dataIndex = state.feedData.findIndex(({ id }) => id === el.id);
+        const { itemList } = state.feedList[listIndex];
+        const { parsedFeedData, feedList } = parseRssData(data, el.feedURL, el.id);
+        const newUpdateTime = parsedFeedData.lastUpdate;
+        const newList = feedList.itemList;
+        if (newUpdateTime !== el.lastUpdate) {
+          const newItems = newList
+            .filter(item => !find(itemList, ({ title }) => item.title === title));
+          const updatedFeedData = { ...el, lastUpdate: newUpdateTime };
+          const updatedList = [...newItems, ...itemList];
+          resolve({
+            listIndex, updatedFeedData, updatedList, dataIndex,
+          });
+        }
+        resolve(null);
+      }).catch((err) => {
+        reject(err);
+      });
+    }));
 
     Promise.all(getNewFeeds).then((response) => {
       response.filter(el => el).forEach((el) => {
