@@ -51,7 +51,7 @@ export default () => {
   });
 
   const startReloading = () => {
-    const getNewFeeds = state.feedData.map(el => new Promise((resolve, reject) => {
+    const getNewFeeds = state.feedData.map(el =>
       axios.get(el.feedURL, {
         headers: { 'Access-Control-Allow-Origin': '*' },
       }).then(({ data }) => {
@@ -66,15 +66,12 @@ export default () => {
             .filter(item => !find(itemList, ({ title }) => item.title === title));
           const updatedFeedData = { ...el, lastUpdate: newUpdateTime };
           const updatedList = [...newItems, ...itemList];
-          resolve({
+          return {
             listIndex, updatedFeedData, updatedList, dataIndex,
-          });
+          };
         }
-        resolve(null);
-      }).catch((err) => {
-        reject(err);
-      });
-    }));
+        return null;
+      }).catch(err => err));
 
     Promise.all(getNewFeeds).then((response) => {
       response.filter(el => el).forEach((el) => {
