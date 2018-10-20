@@ -80,7 +80,7 @@ export default () => {
         state.feedList[el.listIndex].itemList = el.updatedList;
       });
       setTimeout(startReloading, 5000);
-    }).catch((err) => {
+    }).catch(() => {
       setTimeout(startReloading, 5000);
     });
   };
