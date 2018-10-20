@@ -70,8 +70,6 @@ export default () => {
         };
       }
       return null;
-    }).catch((err) => {
-      console.log('An error happened:', err);
     }));
 
     Promise.all(getNewFeeds).then((response) => {
@@ -81,6 +79,7 @@ export default () => {
       });
       setTimeout(startReloading, 5000);
     }).catch(() => {
+      console.log('an error happened');
       setTimeout(startReloading, 5000);
     });
   };
