@@ -70,7 +70,9 @@ export default () => {
         };
       }
       return null;
-    }).catch(err => err));
+    }).catch((err) => {
+      console.log('An error happened:', err);
+    }));
 
     Promise.all(getNewFeeds).then((response) => {
       response.filter(el => el).forEach((el) => {
@@ -79,7 +81,7 @@ export default () => {
       });
       setTimeout(startReloading, 5000);
     }).catch((err) => {
-      state.errorModalData = { isOpen: true, data: err };
+      setTimeout(startReloading, 5000);
     });
   };
 
