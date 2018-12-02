@@ -4,12 +4,8 @@
   "description": "RSS hexlet project",
   "main": "dist/index.js",
   "scripts": {
-    "webpack-serve": "webpack-serve",
-    "test": "jest",
+    "webpack-dev-server": "webpack-dev-server",
     "babel-node": "babel-node",
-    "flow": "flow",
-    "flow-typed": "flow-typed",
-    "gulp": "gulp",
     "eslint": "eslint",
     "webpack": "webpack --watch",
     "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
