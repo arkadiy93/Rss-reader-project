@@ -1,3 +1,4 @@
+import '@babel/polyfill';
 import axios from 'axios';
 import isURL from 'validator/lib/isURL';
 import { find, uniqueId } from 'lodash';
@@ -30,6 +31,25 @@ const parseRssData = (data, feedURL, id = uniqueId()) => {
   };
 };
 
+const handleReloadData = (el, data, state) => {
+  const listIndex = state.feedList.findIndex(({ id }) => id === el.id);
+  const dataIndex = state.feedData.findIndex(({ id }) => id === el.id);
+  const { itemList } = state.feedList[listIndex];
+  const { parsedFeedData, feedList } = parseRssData(data, el.feedURL, el.id);
+  const newUpdateTime = parsedFeedData.lastUpdate;
+  const newList = feedList.itemList;
+  if (newUpdateTime !== el.lastUpdate) {
+    const newItems = newList
+      .filter(item => !find(itemList, ({ title }) => item.title === title));
+    const updatedFeedData = { ...el, lastUpdate: newUpdateTime };
+    const updatedList = [...newItems, ...itemList];
+    return {
+      listIndex, updatedFeedData, updatedList, dataIndex,
+    };
+  }
+  return null;
+};
+
 export default () => {
   const state = {
     feedData: [],
@@ -50,41 +70,25 @@ export default () => {
     state.errorModalData = { isOpen: false, data: '' };
   });
 
-  const startReloading = () => {
-    const getNewFeeds = state.feedData.map(el => axios.get(el.feedURL, {
-      headers: { 'Access-Control-Allow-Origin': '*' },
-    }).then(({ data }) => {
-      const listIndex = state.feedList.findIndex(({ id }) => id === el.id);
-      const dataIndex = state.feedData.findIndex(({ id }) => id === el.id);
-      const { itemList } = state.feedList[listIndex];
-      const { parsedFeedData, feedList } = parseRssData(data, el.feedURL, el.id);
-      const newUpdateTime = parsedFeedData.lastUpdate;
-      const newList = feedList.itemList;
-      if (newUpdateTime !== el.lastUpdate) {
-        const newItems = newList
-          .filter(item => !find(itemList, ({ title }) => item.title === title));
-        const updatedFeedData = { ...el, lastUpdate: newUpdateTime };
-        const updatedList = [...newItems, ...itemList];
-        return {
-          listIndex, updatedFeedData, updatedList, dataIndex,
-        };
-      }
-      return null;
-    }));
+  const startReloading = async () => {
+    const getNewFeeds = state.feedData.map(async (el) => {
+      const { data } = await axios.get(el.feedURL, { headers: { 'Access-Control-Allow-Origin': '*' } });
+      return handleReloadData(el, data, state);
+    });
 
-    Promise.all(getNewFeeds).then((response) => {
+    try {
+      const response = await Promise.all(getNewFeeds);
       response.filter(el => el).forEach((el) => {
         state.feedData[el.dataIndex] = el.updatedFeedData;
         state.feedList[el.listIndex].itemList = el.updatedList;
       });
-      setTimeout(startReloading, 5000);
-    }).catch(() => {
+    } catch (e) {
       console.log('an error happened');
-      setTimeout(startReloading, 5000);
-    });
+    }
+    setTimeout(startReloading, 5000);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const input = document.getElementById('textInput');
     const requestedUrl = input.value;
@@ -97,9 +101,8 @@ export default () => {
     }
     state.isFeedLoading = true;
     state.isInputValid = true;
-    axios.get(urlWithProxy, {
-      headers: { 'Access-Control-Allow-Origin': '*' },
-    }).then(({ data }) => {
+    try {
+      const { data } = await axios.get(urlWithProxy, { headers: { 'Access-Control-Allow-Origin': '*' } });
       state.isFeedLoading = false;
       const { parsedFeedData, feedList } = parseRssData(data, urlWithProxy);
       state.feedData = [parsedFeedData, ...feedData];
@@ -108,10 +111,10 @@ export default () => {
         state.isReloading = true;
         startReloading();
       }
-    }).catch((err) => {
+    } catch (err) {
       state.isFeedLoading = false;
       state.errorModalData = { isOpen: true, data: err };
-    });
+    }
   };
 
   const [form] = document.getElementsByTagName('form');
