@@ -15,27 +15,13 @@ const inputValidationWatcher = state => watch(state, 'isInputValid', () => {
 });
 
 const modalDataWatcher = state => watch(state, 'modalData', () => {
+  const { modalData } = state;
   const modalBody = document.querySelector('.modal-body');
   const ModalTitle = document.querySelector('.modal-title');
-  if (state.modalData.isOpen) {
+  if (modalData.isOpen) {
     const p = document.createElement('p');
-    ModalTitle.innerHTML = 'Feed information';
-    p.innerText = state.modalData.data;
-    modalBody.append(p);
-    $('#modal').modal('show');
-  } else {
-    modalBody.innerHTML = '';
-    ModalTitle.innerHTML = '';
-  }
-});
-
-const errorModalDataWatcher = state => watch(state, 'errorModalData', () => {
-  const modalBody = document.querySelector('.modal-body');
-  const ModalTitle = document.querySelector('.modal-title');
-  if (state.errorModalData.isOpen) {
-    const p = document.createElement('p');
-    ModalTitle.innerHTML = 'Error message';
-    p.innerText = state.errorModalData.data;
+    ModalTitle.innerHTML = modalData.title;
+    p.innerText = modalData.data;
     modalBody.append(p);
     $('#modal').modal('show');
   } else {
@@ -81,7 +67,6 @@ const startWatching = (state, handleClick) => {
   feedLoadingWatcher(state);
   inputValidationWatcher(state);
   modalDataWatcher(state);
-  errorModalDataWatcher(state);
   feedListWatcher(state, handleClick);
 };
 

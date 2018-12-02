@@ -54,7 +54,7 @@ export default () => {
   const state = {
     feedData: [],
     feedList: [],
-    modalData: { isOpen: false, data: '' },
+    modalData: { isOpen: false, data: '', title: '' },
     errorModalData: { isOpen: false, data: '' },
     isInputValid: true,
     isReloading: false,
@@ -62,12 +62,11 @@ export default () => {
   };
 
   const handleClick = ({ description }) => () => {
-    state.modalData = { isOpen: true, data: description };
+    state.modalData = { isOpen: true, data: description, title: 'Feed information' };
   };
 
   $('#modal').on('hide.bs.modal', () => {
     state.modalData = { isOpen: false, data: '' };
-    state.errorModalData = { isOpen: false, data: '' };
   });
 
   const startReloading = async () => {
@@ -113,7 +112,7 @@ export default () => {
       }
     } catch (err) {
       state.isFeedLoading = false;
-      state.errorModalData = { isOpen: true, data: err };
+      state.modalData = { isOpen: true, data: err, title: 'Error message' };
     }
   };
 
